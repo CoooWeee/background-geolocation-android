@@ -19,8 +19,7 @@ def projDependencies = [
     [configuration: "implementation", dependency: androidLibs.androidxCore],
     [configuration: "implementation", dependency: androidLibs.localbroadcastmanager],
     [configuration: "implementation", dependency: androidLibs.appcompat],
-    [configuration: "implementation", dependency: libs.permissions,
-        options: { exclude group: 'androidx.appcompat', module: 'appcompat'}],
+    [configuration: "implementation", dependency: libs.permissions],
     [configuration: "implementation", dependency: libs.logback],
     [configuration: "implementation", dependency: libs.slf4j],
     [configuration: "implementation", dependency: libs.promise],
@@ -32,10 +31,10 @@ buildscript {
             url 'https://maven.google.com/'
             name 'Google'
         }
-        jcenter()
+        mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.1'
+        classpath 'com.android.tools.build:gradle:7.0.0'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -47,7 +46,7 @@ allprojects {
         maven {
             url 'https://maven.google.com'
         }
-        jcenter()
+        mavenCentral()
     }
 }
 
