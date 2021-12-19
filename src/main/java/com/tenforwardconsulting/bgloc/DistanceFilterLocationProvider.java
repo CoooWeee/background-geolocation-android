@@ -102,7 +102,7 @@ public class DistanceFilterLocationProvider extends AbstractLocationProvider imp
 
         // Location criteria
         criteria = new Criteria();
-        criteria.setAltitudeRequired(false);
+        criteria.setAltitudeRequired(true);
         criteria.setBearingRequired(false);
         criteria.setSpeedRequired(true);
         criteria.setCostAllowed(true);

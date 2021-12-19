@@ -37,7 +37,7 @@ public class RawLocationProvider extends AbstractLocationProvider implements Loc
         }
 
         Criteria criteria = new Criteria();
-        criteria.setAltitudeRequired(false);
+        criteria.setAltitudeRequired(true);
         criteria.setBearingRequired(false);
         criteria.setSpeedRequired(true);
         criteria.setCostAllowed(true);
