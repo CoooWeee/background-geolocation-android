@@ -39,7 +39,7 @@ public class RawLocationProvider extends AbstractLocationProvider implements Loc
         Criteria criteria = new Criteria();
         criteria.setAltitudeRequired(true);
         criteria.setBearingRequired(false);
-        criteria.setSpeedRequired(true);
+        criteria.setSpeedRequired(false);
         criteria.setCostAllowed(true);
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         criteria.setHorizontalAccuracy(translateDesiredAccuracy(mConfig.getDesiredAccuracy()));
