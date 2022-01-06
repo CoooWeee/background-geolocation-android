@@ -1,22 +1,29 @@
 package com.marianhello.bgloc.provider;
 
 import android.content.Context;
-import android.location.Criteria;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Bundle;
+import android.os.Looper;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+
+import androidx.annotation.RequiresPermission;
 
 import com.marianhello.bgloc.Config;
-import com.marianhello.logging.LoggerManager;
 
 /**
  * Created by finch on 7.11.2017.
  */
 
-public class RawLocationProvider extends AbstractLocationProvider implements LocationListener {
-    private LocationManager locationManager;
+public class RawLocationProvider extends AbstractLocationProvider {
+    // private LocationManager locationManager;
     private boolean isStarted = false;
+    private FusedLocationProviderClient locationManager;
+    private LocationCallback locationCallback;
+    private LocationRequest locationRequest;
 
     public RawLocationProvider(Context context) {
         super(context);
@@ -26,32 +33,48 @@ public class RawLocationProvider extends AbstractLocationProvider implements Loc
     @Override
     public void onCreate() {
         super.onCreate();
-
-        locationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
+        buildLocationCallback();
+        locationManager = LocationServices.getFusedLocationProviderClient(mContext);
     }
 
+    @RequiresPermission(anyOf = { "android.permission.ACCESS_COARSE_LOCATION",
+            "android.permission.ACCESS_FINE_LOCATION" })
     @Override
     public void onStart() {
         if (isStarted) {
             return;
         }
 
-        Criteria criteria = new Criteria();
-        criteria.setAltitudeRequired(true);
-        criteria.setBearingRequired(false);
-        criteria.setSpeedRequired(false);
-        criteria.setCostAllowed(true);
-        criteria.setAccuracy(Criteria.ACCURACY_FINE);
-        criteria.setHorizontalAccuracy(translateDesiredAccuracy(mConfig.getDesiredAccuracy()));
-        criteria.setPowerRequirement(Criteria.POWER_HIGH);
+        if (locationRequest == null) {
+            logger.error("config missing");
+            return;
+        }
 
         try {
-            locationManager.requestLocationUpdates(locationManager.getBestProvider(criteria, true), mConfig.getInterval(), mConfig.getDistanceFilter(), this);
+            locationManager.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
             isStarted = true;
         } catch (SecurityException e) {
             logger.error("Security exception: {}", e.getMessage());
             this.handleSecurityException(e);
         }
+    }
+
+    private void buildLocationRequest() {
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(mConfig.getInterval()); // minute interval
+        locationRequest.setFastestInterval(mConfig.getFastestInterval());
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
+
+    private void buildLocationCallback() {
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                Location location = locationResult.getLastLocation();
+                handleLocation(location);
+            }
+        };
     }
 
     @Override
@@ -60,7 +83,7 @@ public class RawLocationProvider extends AbstractLocationProvider implements Loc
             return;
         }
         try {
-            locationManager.removeUpdates(this);
+            locationManager.removeLocationUpdates(locationCallback);
         } catch (SecurityException e) {
             logger.error("Security exception: {}", e.getMessage());
             this.handleSecurityException(e);
@@ -69,63 +92,23 @@ public class RawLocationProvider extends AbstractLocationProvider implements Loc
         }
     }
 
+    @RequiresPermission(anyOf = { "android.permission.ACCESS_COARSE_LOCATION",
+            "android.permission.ACCESS_FINE_LOCATION" })
     @Override
     public void onConfigure(Config config) {
         super.onConfigure(config);
         if (isStarted) {
             onStop();
+            buildLocationRequest();
             onStart();
+        } else {
+            buildLocationRequest();
         }
     }
 
     @Override
     public boolean isStarted() {
         return isStarted;
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        logger.debug("Location change: {}", location.toString());
-
-        showDebugToast("acy:" + location.getAccuracy() + ",v:" + location.getSpeed());
-        handleLocation(location);
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle bundle) {
-        logger.debug("Provider {} status changed: {}", provider, status);
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-        logger.debug("Provider {} was enabled", provider);
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-        logger.debug("Provider {} was disabled", provider);
-    }
-
-    /**
-     * Translates a number representing desired accuracy of Geolocation system from set [0, 10, 100, 1000].
-     * 0:  most aggressive, most accurate, worst battery drain
-     * 1000:  least aggressive, least accurate, best for battery.
-     */
-    private Integer translateDesiredAccuracy(Integer accuracy) {
-        if (accuracy >= 1000) {
-            return Criteria.ACCURACY_LOW;
-        }
-        if (accuracy >= 100) {
-            return Criteria.ACCURACY_MEDIUM;
-        }
-        if (accuracy >= 10) {
-            return Criteria.ACCURACY_HIGH;
-        }
-        if (accuracy >= 0) {
-            return Criteria.ACCURACY_HIGH;
-        }
-
-        return Criteria.ACCURACY_MEDIUM;
     }
 
     @Override
