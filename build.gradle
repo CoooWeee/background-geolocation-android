@@ -34,7 +34,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.2'
+        classpath 'com.android.tools.build:gradle:8.0.0'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -51,6 +51,7 @@ allprojects {
 }
 
 android {
+    namespace "com.marianhello.backgroundgeolocation" 
     compileSdkVersion project.ext.getCompileSdkVersion()
 
     // Tip: https://stackoverflow.com/questions/39987669/renamingdelegatingcontext-is-deprecated-how-do-we-test-sqlite-db-now/52170737#52170737
@@ -92,7 +93,7 @@ dependencies {
     }
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.annotation:annotation:1.3.0'
+    implementation 'androidx.annotation:annotation:1.5.0'
 }
 
 task prepareKotlinBuildScriptModel {
